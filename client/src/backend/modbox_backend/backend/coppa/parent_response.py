@@ -1,25 +1,14 @@
-from backend.database.parent_table import get_parent_request, approve_child_account, deny_child_account
-from backend.verification.expiration import is_code_expired
+from backend.database.parent_table import get_parent_request, approve_parent_request
+from datetime import datetime
 
-def approve_request(code):
-    request = get_parent_request(code)
-
+def approve_parent_account(child_email, code):
+    request = get_parent_request(child_email, code)
     if not request:
-        return {"approved": False, "reason": "invalid_code"}
+        return False
 
-    if is_code_expired(request["expiration"]):
-        return {"approved": False, "reason": "expired"}
+    now = datetime.utcnow()
+    if now > request["expires_at"]:
+        return False
 
-    approve_child_account(request["child_email"])
-
-    return {"approved": True}
-
-def deny_request(code):
-    request = get_parent_request(code)
-
-    if not request:
-        return {"denied": False, "reason": "invalid_code"}
-
-    deny_child_account(request["child_email"])
-
-    return {"denied": True}
+    approve_parent_request(child_email, code)
+    return True

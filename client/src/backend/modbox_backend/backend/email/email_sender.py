@@ -6,7 +6,7 @@ from pathlib import Path
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SMTP_USERNAME = "modbox.noreply@gmail.com"
-SMTP_PASSWORD = "MC9135@#10"
+SMTP_PASSWORD = "phgd whjv vgrh ecaw"
 
 TEMPLATE_PATH = Path(__file__).parent / "templates"
 

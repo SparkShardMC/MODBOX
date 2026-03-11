@@ -1,31 +1,31 @@
+from backend.database.parent_table import create_parent_request, get_parent_request, approve_parent_request
+from backend.utils.date_utils import add_minutes_to_now
 from backend.email.email_sender import send_email
-from backend.database.parent_table import create_parent_request
-from backend.verification.code_generator import generate_code
-from backend.verification.expiration import generate_expiration_time
+import secrets
 
-def request_parent_permission(child_email, username):
-    code = generate_code()
-    expiration = generate_expiration_time()
+def generate_random_code(length=6):
+    return secrets.token_hex(length // 2).upper()
 
-    parent_request = create_parent_request(
+def request_parent_approval(child_email, parent_email=None):
+    code = generate_random_code()
+    expires_at = add_minutes_to_now(60)
+
+    request_id = create_parent_request(
         child_email=child_email,
-        username=username,
         code=code,
-        expiration=expiration
+        expires_at=expires_at,
+        parent_email=parent_email
     )
 
-    return {
-        "coppa_required": True,
-        "parent_request_created": True,
-        "request_id": parent_request["id"]
-    }
+    if parent_email:
+        send_email(
+            to_email=parent_email,
+            template="parent_permission_email.html",
+            data={"child_email": child_email, "code": code},
+            subject="Parental Approval Required"
+        )
 
-def send_parent_email(parent_email, child_email, code):
-    send_email(
-        to_email=parent_email,
-        template="parent_permission_email.html",
-        data={
-            "child_email": child_email,
-            "code": code
-        }
-    )
+    return request_id, code
+
+def get_pending_request(child_email, code):
+    return get_parent_request(child_email, code)

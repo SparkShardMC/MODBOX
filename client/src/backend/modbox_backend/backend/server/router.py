@@ -35,15 +35,18 @@ def signup():
         return jsonify({"error": "Username not allowed"}), 400
 
     user = signup_user(username, email, password)
+
     code = verify_code.generate_verification_code()
     expiration = add_minutes_to_now(10)
     verify_code.store_verification_code(email, code, expiration)
+
     send_email(
         to_email=email,
         template="verification_email.html",
         data={"code": code},
         subject="Verify Your MODBOX Account"
     )
+
     return jsonify({"message": "User created, verification email sent"}), 201
 
 @app.route("/auth/login", methods=["POST"])
@@ -72,20 +75,19 @@ def verify():
         return jsonify({"message": "Email verified"}), 200
     return jsonify({"error": "Invalid or expired code"}), 400
 
+# ---------------------------
+# COPPA Endpoints
+# ---------------------------
+
 @app.route("/coppa/request", methods=["POST"])
 def coppa_request():
     data = request.json
     child_email = data.get("child_email")
-    username = data.get("username")
+    parent_email = data.get("parent_email")  # optional
 
-    request_id, code = request_parent_approval(child_email, username)
-    send_email(
-        to_email=child_email,
-        template="parent_permission_email.html",
-        data={"child_email": child_email, "code": code},
-        subject="Parental Approval Required"
-    )
-    return jsonify({"message": "Parent approval email sent"}), 201
+    request_id, code = request_parent_approval(child_email, parent_email)
+
+    return jsonify({"message": "Parent approval requested", "code": code}), 201
 
 @app.route("/coppa/approve", methods=["POST"])
 def coppa_approve():
